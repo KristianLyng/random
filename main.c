@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
 		if (!scanf("%d",&(grid.ar[i]))) puts("wat!");
 	}
 
-    for(o=0;o<60000;o++)
-    {
+//    for(o=0;o<10000;o++)
+//    {
         cursor_n = cursor_d = list;
         memset(grid.path, '\0', sizeof(int)*grid.w*grid.h);
         memset(list, '\0', sizeof(int)*grid.w*grid.h*2);
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
     		checkfield(cursor_d[0],cursor_d[1]);
             cursor_d += 2;
         }
-	}
+//	}
 	
     for(i=0;i<grid.w*grid.h;i++)
     {
@@ -141,5 +141,7 @@ int main(int argc, char *argv[])
 
 	free(grid.ar);
 	free(grid.path);
+    free(list);
+    free(marked);
 	return 0;
 }

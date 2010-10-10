@@ -17,7 +17,6 @@ struct grid_t {
 struct queue_element_t {
     int id;
     int next;
-    int marked;
 };
 
 struct queue_t {
@@ -33,7 +32,7 @@ push(struct queue_t *queue, const struct grid_t *grid, int id, int next)
     assert(grid->size);
     queue->e[queue->tail].id = id;
     queue->e[queue->tail].next = next;
-    queue->e[queue->tail].marked++;
+    grid->marked[id]++;
     queue->tail++;
 }
 
@@ -56,21 +55,21 @@ checkfield(struct queue_t *q, const struct grid_t *g)
     // Check the cell to the right.
     if ( (cursor+1) % g->w != 0 &&
          (cursor+1) < g->size &&
-         q->e[cursor+1].marked == 0)
+         g->marked[cursor+1] == 0)
         push(q,g,cursor+1,nextval+1);
 
     // Check the cell to the left.
     if ( (cursor) % g->w != 0 &&
          (cursor-1) >= 0 &&
-         q->e[cursor-1].marked == 0)
+         g->marked[cursor-1] == 0)
         push(q,g,cursor-1,nextval+1);
 
     // Check the cell below.
-    if ( (cursor + g->w) < g->size && q->e[cursor+g->w].marked == 0 )
+    if ( (cursor + g->w) < g->size && g->marked[cursor + g->w] == 0 )
         push(q,g,cursor + g->w, nextval+1);
 
     // Check the cell above.
-    if ( (cursor - g->w) >= 0 && q->e[cursor-g->w].marked == 0)
+    if ( (cursor - g->w) >= 0 && g->marked[cursor - g->w] == 0)
         push(q,g,cursor - g->w, nextval+1);
 }
 
@@ -140,7 +139,7 @@ int main(void)
     }
 
     // As long as there are unchecked cells in the queue, check the cells.
-    while (HEAD(queue).marked ) {
+    while (grid->marked[HEAD(queue).id] ) {
         checkfield(queue, grid);
         queue->head++;
     }

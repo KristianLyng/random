@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/time.h>
+
+#define RUNS 10000
 
 #define HEAD(q) (q->e[q->head])
 #define TAIL(q) (q->e[q->tail])
@@ -105,6 +108,25 @@ static struct grid_t *parse_grid(void) {
 }
 
 /*
+ * Reset grid
+ */
+static void reset_grid_path(struct grid_t *g) {
+    memset(g->path, '\0', g->size * sizeof(int));
+    memset(g->marked, '\0', g->size * sizeof(int));
+}
+
+/*
+ * Free grid
+ */
+static void free_grid(struct grid_t *g)
+{
+    free(g->ar);
+    free(g->path);
+    free(g->marked);
+    free(g);
+}
+
+/*
  * Allocate and initialize the queue.
  */
 static struct queue_t *alloc_queue(const struct grid_t *grid)
@@ -121,29 +143,58 @@ static struct queue_t *alloc_queue(const struct grid_t *grid)
     return queue;
 }
 
+/*
+ * Reset the queue, as if it was empty.
+ */
+static void reset_queue(struct queue_t *q, const struct grid_t *g)
+{
+    struct queue_element_t *t = q->e;
+    memset(q, '\0', sizeof(struct queue_t));
+    q->e = t;
+    memset(q->e, '\0', g->size);
+}
+
+/*
+ * Free the queue.
+ */
+static void free_queue(struct queue_t *q)
+{
+    free(q->e);
+    free(q);
+};
+
 int main(void)
 {
-    int i;
+    int i,o;
     struct grid_t *grid;
     struct queue_t *queue;
+    struct timeval starttime, endtime;
 
     grid = parse_grid();
     queue = alloc_queue(grid);
 
-    for(i=0; i<grid->size; i++)
+    gettimeofday(&starttime, NULL);
+
+    for(o=0; o < RUNS; o++)
     {
-        if (grid->ar[i] == 255) {
-            push(queue, grid, i, 1);
-            break;
+        reset_grid_path(grid);
+        reset_queue(queue, grid);
+
+        for(i=0; i<grid->size; i++)
+        {
+            if (grid->ar[i] == 255) {
+                push(queue, grid, i, 1);
+            }
+        }
+
+        // As long as there are unchecked cells in the queue, check the cells.
+        while (grid->marked[HEAD(queue).id] ) {
+            checkfield(queue, grid);
+            queue->head++;
         }
     }
 
-    // As long as there are unchecked cells in the queue, check the cells.
-    while (grid->marked[HEAD(queue).id] ) {
-        checkfield(queue, grid);
-        queue->head++;
-    }
-
+    gettimeofday(&endtime, NULL);
 
     // Print the level to stdout.
     for(i=0;i< grid->size;i++)
@@ -159,5 +210,12 @@ int main(void)
     }
     printf("\n\n");
 
+    printf("Spent %d seconds and %d microseconds - avg. %.f usec per run\n", 
+           endtime.tv_sec - starttime.tv_sec, 
+           endtime.tv_usec - starttime.tv_usec,
+           (float)(endtime.tv_usec - starttime.tv_usec) / (float) RUNS );
+
+    free_queue(queue);
+    free_grid(grid);
     return 0;
 }
